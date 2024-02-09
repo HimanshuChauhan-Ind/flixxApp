@@ -74,6 +74,59 @@ async function showPopularShows(){
 
 }
 
+// Movie data
+async function displayMovieData(){
+    const movieId =  window.location.search.split('=')[1]
+    const movieData = await getAPIData(`movie/${movieId}`)
+    
+    const divTop = document.createElement('div')
+    divTop.classList.add('details-top')
+    divTop.innerHTML = `
+                    <div>
+                    <img
+                    src="https://image.tmdb.org/t/p/w500${movieData.poster_path}"
+                    class="card-img-top"
+                    alt="${movieData.original_title}"
+                    />
+                </div>
+                <div>
+                    <h2>${movieData.original_title}</h2>
+                    <p>
+                    <i class="fas fa-star text-primary"></i>
+                    ${movieData.vote_average.toFixed(1)} / 10
+                    </p>
+                    <p class="text-muted">Release Date: ${movieData.release_date}</p>
+                    <p>
+                    ${movieData.overview}
+                    </p>
+                    <h5>Genres</h5>
+                    <ul class="list-group">
+                    ${movieData.genres.map(genre => `<li>${genre.name}</li>`).join('')}
+                    </ul>
+                    <a href="#" target="_blank" class="btn">Visit Movie Homepage</a>
+                </div>
+    `
+
+    document.getElementById('movie-details').appendChild(divTop)
+
+    const divBot = document.createElement('div')
+    divBot.classList.add('details-bottom')
+    divBot.innerHTML = `
+            <div class="details-bottom">
+                <h2>Movie Info</h2>
+                    <ul>
+                        <li><span class="text-secondary">Budget:</span> $${movieData.budget.toLocaleString()}</li>
+                        <li><span class="text-secondary">Revenue:</span> $${movieData.revenue.toLocaleString()}</li>
+                        <li><span class="text-secondary">Runtime:</span> ${movieData.runtime} minutes</li>
+                        <li><span class="text-secondary">Status:</span> ${movieData.status}</li>
+                    </ul>
+                <h4>Production Companies</h4>
+            <div class="list-group">${movieData.production_companies.map(company=>`${company.name}`).join(', ')}</div>
+        </div>
+    `
+    document.getElementById('movie-details').appendChild(divBot)
+}
+
 // General Fetch Request
 async function getAPIData(endpoint){
     const API_KEY = '22c9c1494181a5e60b14cae76fdd037c'
@@ -124,7 +177,7 @@ function init(){
             console.log('TV Details')
             break;
         case '/movie-details.html':
-            console.log('Movie Details')
+           displayMovieData()
             break;
         case '/search.html':
             console.log('Seatch')
