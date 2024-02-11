@@ -1,5 +1,15 @@
 const global = {
-    currentPage : window.location.pathname
+    currentPage : window.location.pathname,
+    search:{
+        term:'',
+        type:'',
+        page:1,
+        totalPages: 1
+    },
+    api: {
+        apiKey: '22c9c1494181a5e60b14cae76fdd037c',
+        apiUrl: 'https://api.themoviedb.org/3/'
+    }
 }
 
 // Popular Movies
@@ -190,12 +200,29 @@ async function showShowsData(){
 
 // General Fetch Request
 async function getAPIData(endpoint){
-    const API_KEY = '22c9c1494181a5e60b14cae76fdd037c'
-    const API_URL = 'https://api.themoviedb.org/3/'
+    const API_KEY = global.api.apiKey
+    const API_URL = global.api.apiUrl
 
     showSpinner(true)
 
     const response = await fetch(`${API_URL}${endpoint}?api_key=${API_KEY}&language=en-US`)
+
+    const data = response.json()
+
+    showSpinner(false)
+
+    return data
+}
+
+async function searchAPIData(){
+    const API_KEY = global.api.apiKey
+    const API_URL = global.api.apiUrl
+
+    showSpinner(true)
+
+    const response = await fetch(
+        `${API_URL}search/${global.search.type}?api_key=${API_KEY}&language=en-US&query=${global.search.term}&page=${global.search.page}`
+      );
 
     const data = response.json()
 
@@ -295,6 +322,71 @@ function initSwiper() {
     });
   }
 
+async function search(){
+    const location = window.location.search
+    const urlParams = new URLSearchParams(location)
+
+    global.search.type = urlParams.get('type')
+    global.search.term = urlParams.get('search-term')
+
+    if(global.search.term !== '' && global.search.term !== null){
+        const { results, total_pages, page }  = await searchAPIData()
+        
+        if (results.length === 0){
+            alertTab('Found Nothing','error')
+            return
+        }
+
+        displaySearchResults(results)
+
+        document.querySelector('#search-term').value = ''
+
+    }else{
+        alertTab('Enter something!!','error')
+    }
+
+}
+
+function displaySearchResults(results){
+    results.forEach((result)=>{
+        const div = document.createElement('div')
+        div.classList.add('card')
+
+        div.innerHTML = `
+            <a href="${global.search.type}-details.html?id=${result.id}">
+               ${
+                result.poster_path? ` <img
+                src="https://image.tmdb.org/t/p/w500/${result.poster_path}"
+                class="card-img-top"
+                alt="${global.search.type === 'movie' ? result.title : result.name}"
+                />`: `
+                <img
+                src="images/no-image.jpg"
+                class="card-img-top"
+                alt="${global.search.type === 'movie' ? result.title : result.name}"
+                />`
+               }
+            </a>
+            <div class="card-body">
+                <h5 class="card-title">${global.search.type === 'movie' ? result.title : result.name}</h5>
+                <p class="card-text">
+                <small class="text-muted">Release: ${global.search.type === 'movie' ? result.release_date : result.first_air_date}</small>
+                </p>
+            </div>
+        `;
+        document.querySelector('#search-results').appendChild(div)
+    })
+}
+
+function alertTab(message, className){
+    const alertEl = document.createElement('div');
+    alertEl.classList.add('alert', className);
+    alertEl.appendChild(document.createTextNode(message));
+    document.querySelector('#alert').appendChild(alertEl);
+
+    setTimeout(() => alertEl.remove(), 3000);
+}
+
 //Initialize the App
 function init(){
     switch (global.currentPage) {
@@ -313,7 +405,7 @@ function init(){
            displayMovieData()
             break;
         case '/search.html':
-            console.log('Seatch')
+            search()
     }
     highlightTab()
 }
